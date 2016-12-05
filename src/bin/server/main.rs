@@ -8,19 +8,15 @@ use iron::status;
 use router::Router;
 use config::reader::from_file;
 
+use self::{PushToken, PullToken};
+
 use std::path::Path;
 use std::net::SocketAddr;
 
 static mut ADDRESS: Option<SocketAddr> = None;
 
-type UpdateData struct {
-
-};
-
 fn update_handler(req: &mut Request) -> IronResult<Response> {
-    let auth_header = 
-
-
+    let auth_header = req.headers.get<PushToken>();
     let body = req.get::<bodyparser::Json>();
     println!("{:?}", body);
     Ok(Response::with((status::Ok, "post")))

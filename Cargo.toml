@@ -1,12 +1,25 @@
 [package]
 name = "ansible"
 version = "0.1.0"
-authors = ["Nathan Perry <nmp2@williams.edu>"]
+authors = ["Nathan Perry <avaglir@gmail.com>"]
+
+[[bin]]
+name = "pull"
+path = "src/bin/pull/main.rs"
+
+[[bin]]
+name = "push"
+path = "src/bin/push/main.rs"
+
+[[bin]]
+name = "server"
+path = "src/bin/server/main.rs"
 
 [dependencies]
 iron = "0.4.0"
 router = "*"
 config = "~0.1.0"
+hyper = "0.9.13"
 
 [dependencies.bodyparser]
 git = "https://github.com/iron/body-parser.git"
