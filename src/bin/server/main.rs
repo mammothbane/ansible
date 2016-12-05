@@ -2,13 +2,14 @@ extern crate iron;
 extern crate router;
 extern crate bodyparser;
 extern crate config;
+extern crate ansible;
 
 use iron::prelude::*;
 use iron::status;
 use router::Router;
 use config::reader::from_file;
 
-use self::{PushToken, PullToken};
+use ansible::{PushToken, PullToken};
 
 use std::path::Path;
 use std::net::SocketAddr;
@@ -16,7 +17,8 @@ use std::net::SocketAddr;
 static mut ADDRESS: Option<SocketAddr> = None;
 
 fn update_handler(req: &mut Request) -> IronResult<Response> {
-    let auth_header = req.headers.get<PushToken>();
+    let headers = req.headers.clone();
+    let auth_header = headers.get::<PushToken>();
     let body = req.get::<bodyparser::Json>();
     println!("{:?}", body);
     Ok(Response::with((status::Ok, "post")))
