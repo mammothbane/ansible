@@ -9,6 +9,7 @@ mod error;
 
 use iron::prelude::*;
 use iron::status;
+use iron::Handler;
 use router::Router;
 use config::reader::from_file;
 use rustc_serialize::hex::FromHex;
@@ -19,14 +20,43 @@ use std::net::SocketAddr;
 use ansible::{PushToken, PullToken, Update};
 use error::ServerError;
 
+// struct State {
+//     address: Option<SocketAddr>
+// }
+//
+// impl State {
+//     fn new() -> State {
+//         State{address: None}
+//     }
+//
+//     fn update_handler(&mut self) -> Handler {
+//         move |req: &mut Request| {
+//             self.address = Some(req.remote_addr.clone())
+//             Ok(Response::with((status::Ok, "updated")))
+//         }
+//     }
+//
+//     fn get_handler(&self) -> Handler {
+//         move |req: &mut Request| {
+//             Ok(Response::with((status::Ok, format!("{}", self.address))))
+//         }
+//     }
+// }
+
 static mut ADDRESS: Option<SocketAddr> = None;
 
 fn update_handler(req: &mut Request) -> IronResult<Response> {
+    unsafe {
+        ADDRESS = Some(req.remote_addr.clone());
+    }
+
     Ok(Response::with((status::Ok, "update")))
 }
 
 fn retrieve_handler(req: &mut Request) -> IronResult<Response> {
-    Ok(Response::with((status::Ok, "repsonse")))
+    unsafe {
+        Ok(Response::with((status::Ok, format!("{:?}", ADDRESS))))
+    }
 }
 
 fn main() {
