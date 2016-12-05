@@ -28,6 +28,7 @@ plugin = "0.2.6"
 serde = "0.8"
 serde_json = "0.8.3"
 rustc-serialize = "0.3.21"
+time = "*"
 
 [dependencies.bodyparser]
 git = "https://github.com/iron/body-parser.git"

@@ -2,7 +2,7 @@ use std::error::Error;
 use std::fmt;
 
 #[derive(Debug, Clone)]
-pub struct ServerError(String);
+pub struct ServerError(pub String);
 
 impl fmt::Display for ServerError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -15,7 +15,7 @@ impl Error for ServerError {
         "General server error."
     }
 
-    fn cause(&self) -> Option<Error> {
-        None()
+    fn cause(&self) -> Option<&Error> {
+        None
     }
 }

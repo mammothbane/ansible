@@ -9,8 +9,8 @@ use iron::typemap::Key;
 const PUSH_KEY: &'static str = "X-Ansible-PushToken";
 const PULL_KEY: &'static str = "X-Ansible-PullToken";
 
-header! { (PushToken, PUSH_KEY) => [usize] }
-header! { (PullToken, PULL_KEY) => [usize] }
+header! { (PushToken, PUSH_KEY) => [String] }
+header! { (PullToken, PULL_KEY) => [String] }
 
 impl Key for Update {
     type Value = std::net::IpAddr;
