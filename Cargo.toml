@@ -1,0 +1,6 @@
+[package]
+name = "ansible"
+version = "0.1.0"
+authors = ["Nathan Perry <nmp2@williams.edu>"]
+
+[dependencies]
