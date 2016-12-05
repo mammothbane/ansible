@@ -4,3 +4,9 @@ version = "0.1.0"
 authors = ["Nathan Perry <nmp2@williams.edu>"]
 
 [dependencies]
+iron = "0.4.0"
+router = "*"
+config = "~0.1.0"
+
+[dependencies.bodyparser]
+git = "https://github.com/iron/body-parser.git"
