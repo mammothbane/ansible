@@ -17,7 +17,7 @@ impl Key for Update {
 }
 
 impl Update {
-    fn new(ip: std::net::IpAddr) -> Self {
-        Update{address: ip}
+    pub fn new(addr: std::net::IpAddr) -> Self {
+        Update{address: addr}
     }
 }
