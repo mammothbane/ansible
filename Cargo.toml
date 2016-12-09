@@ -22,6 +22,7 @@ serde_codegen = "0.8"
 [dependencies]
 iron = "0.4.0"
 router = "*"
+persistent = "0.2.1"
 config = "~0.1.0"
 hyper = "0.9.13"
 plugin = "0.2.6"
