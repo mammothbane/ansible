@@ -8,12 +8,17 @@ extern crate rustc_serialize;
 mod error;
 
 use config::reader::from_file;
-use rustc_serialize::hex::FromHex;
 
+use std::io::Cursor;
 use std::path::Path;
 use std::net::SocketAddr;
 
-use error::ServerError;
+use ansible::Config;
+use rocket::config::Config as RConfig;
+use rocket::config::Environment;
+use rocket::State;
+use rocket::http::Status;
+use rocket::response::{self, Response, Responder};
 
 // static mut ADDRESS: Option<SocketAddr> = None;
 //
@@ -31,18 +36,36 @@ use error::ServerError;
 //     }
 // }
 
+struct BroadcastAddr(Option<SocketAddr>);
+
 #[get("/")]
-fn index() -> &'static str {
-    "HELLO"
+fn index(addr: State<BroadcastAddr>) -> &BroadcastAddr {
+    addr.inner()
 }
 
+impl<'a> Responder<'a> for BroadcastAddr {
+    fn respond(self) -> response::Result<'a> {
+        (match self.0 {
+            Some(x) => Response::build()
+                .sized_body(Cursor::new(x.to_string()))
+                .status(Status::Ok),
+            None => Response::build()
+                .status(Status::NotFound),
+        }).ok()
+    }
+}
 
 fn main() {
-    let cfg = from_file(Path::new("ansible.conf")).expect("Failed to get config file.");
-    let sock_str = format!("0.0.0.0:{}", cfg.lookup_integer32("port").unwrap());
+    let cfg = Config::load();
 
-    let push_token = cfg.lookup_str("push_secret").unwrap().to_owned();
-    let pull_token = cfg.lookup_str("pull_secret").unwrap().to_owned();
+    from_file(Path::new("ansible.conf")).expect("Failed to get config file.");
+    let rcfg = RConfig::build(Environment::Development)
+        .address("0.0.0.0")
+        .port(cfg.port)
+        .unwrap();
 
-    rocket::ignite().mount("/", routes![index]).launch();
+    rocket::custom(rcfg, true)
+        .mount("/", routes![index])
+        .manage(BroadcastAddr(None))
+        .launch();
 }

@@ -21,3 +21,7 @@ rocket_codegen = "0.2.0"
 rustc-serialize = "0.3.21"
 config = "~0.1.0"
 time = "*"
+
+serde = "0.9"
+serde_json = "0.9"
+serde_derive = "0.9"
