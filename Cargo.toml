@@ -2,7 +2,6 @@
 name = "ansible"
 version = "0.1.0"
 authors = ["Nathan Perry <avaglir@gmail.com>"]
-build = "build.rs"
 
 [[bin]]
 name = "pull"
@@ -16,20 +15,9 @@ path = "src/bin/push/main.rs"
 name = "server"
 path = "src/bin/server/main.rs"
 
-[build-dependencies]
-serde_codegen = "0.8"
-
 [dependencies]
-iron = "0.4.0"
-router = "*"
-persistent = "0.2.1"
-config = "~0.1.0"
-hyper = "0.9.13"
-plugin = "0.2.6"
-serde = "0.8"
-serde_json = "0.8.3"
+rocket = "0.2.0"
+rocket_codegen = "0.2.0"
 rustc-serialize = "0.3.21"
+config = "~0.1.0"
 time = "*"
-
-[dependencies.bodyparser]
-git = "https://github.com/iron/body-parser.git"
