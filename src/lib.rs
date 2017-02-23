@@ -6,6 +6,8 @@ extern crate rocket;
 
 mod tokens;
 mod config;
+mod update;
 
 pub use config::{Config};
 pub use tokens::{PushToken, PullToken};
+pub use update::Update;

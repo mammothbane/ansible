@@ -18,6 +18,8 @@ path = "src/bin/server/main.rs"
 [dependencies]
 rocket = "0.2.0"
 rocket_codegen = "0.2.0"
+rocket_contrib = "0.2.0"
+
 rustc-serialize = "0.3.21"
 time = "*"
 
