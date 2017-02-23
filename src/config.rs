@@ -11,6 +11,7 @@ struct TConfig {
     port: u16,
 }
 
+#[derive(Clone, Debug)]
 pub struct Config {
     pub push_key: PushToken,
     pub pull_key: PullToken,
