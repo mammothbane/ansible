@@ -6,10 +6,14 @@ extern crate rustc_serialize;
 #[macro_use] extern crate rocket_contrib;
 
 mod error;
+mod broadcast_addr;
+
+use broadcast_addr::BroadcastAddr;
 
 use ansible::{Config, PullToken, PushToken, Update};
 
 use std::net::SocketAddr;
+use std::ops::Deref;
 
 use rocket::config::Config as RConfig;
 use rocket::config::Environment;
@@ -19,9 +23,6 @@ use rocket::request::Request;
 
 use rocket_contrib::JSON;
 
-#[derive(Debug, Clone, Copy)]
-struct BroadcastAddr(Option<SocketAddr>);
-
 #[get("/")]
 fn index(addr: State<BroadcastAddr>, cfg: State<Config>, tok: Option<PullToken>) -> Result<String, Status> {
     match tok {
@@ -29,31 +30,32 @@ fn index(addr: State<BroadcastAddr>, cfg: State<Config>, tok: Option<PullToken>)
         _ => return Err(Status::Unauthorized),
     }
 
-    match addr.0 {
+    match *addr.inner().deref() {
         Some(x) => Ok(x.to_string()),
         None => Err(Status::NotFound),
     }
 }
 
-#[post("/update", rank = 1)]
-fn update_json(newAddr: JSON<Update>, mut addr: State<BroadcastAddr> , tok: Option<PushToken>, cfg: State<Config>) {
+#[post("/update", rank = 1, data = "<newAddr>")]
+fn update_json(newAddr: JSON<Update>, mut addr: State<BroadcastAddr> , tok: Option<PushToken>, cfg: State<Config>) -> Result<(), Status> {
+    match tok {
+        Some(ref x) if *x == cfg.push_key => (),
+        _ => return Err(Status::Unauthorized)
+    }
 
+    addr.load(newAddr.addr());
+    Ok(())
 }
 
 #[post("/update", rank = 2)]
-fn update(req: &Request, mut addr: State<BroadcastAddr>, tok: Option<PushToken>, cfg: State<Config>) -> Result<(), Status> {
+fn update(remote: SocketAddr, mut addr: State<BroadcastAddr>, tok: Option<PushToken>, cfg: State<Config>) -> Result<(), Status> {
     match tok {
         Some(ref x) if *x == cfg.push_key => (),
         _ => return Err(Status::Unauthorized),
     }
 
-    match req.remote() {
-        Some(remote) => {
-            addr.0 = Some(remote);
-            ()
-        },
-        None => Err(Status::BadRequest),
-    }
+    addr.load(remote);
+    Ok(())
 }
 
 #[error(401)]
@@ -72,7 +74,7 @@ fn main() {
 
     rocket::custom(rcfg, true)
         .mount("/", routes![index, update])
-        .manage(BroadcastAddr(None))
+        .manage(BroadcastAddr::new())
         .manage(cfg)
         .catch(errors![unauthorized])
         .launch();
