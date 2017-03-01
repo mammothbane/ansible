@@ -1,31 +1,23 @@
 use std::net::SocketAddr;
-use std::ops::Deref;
+use std::cell::RefCell;
+use std::rc::Rc;
 
-#[derive(Debug)]
-pub struct BroadcastAddr {
-    inner: Option<SocketAddr>,
-}
+#[derive(Debug, Clone)]
+pub struct BroadcastAddr(Rc<RefCell<Option<SocketAddr>>>);
 
 impl BroadcastAddr {
     pub fn new() -> BroadcastAddr {
-        BroadcastAddr {
-            inner: None,
-        }
+        BroadcastAddr(Rc::new(RefCell::new(None)))
     }
 
-    pub fn load(&mut self, s: SocketAddr) {
-        self.inner = Some(s)
+    pub fn load(&self, s: SocketAddr) {
+        *self.0.borrow_mut() = Some(s)
     }
 
     pub fn inner(&self) -> Option<SocketAddr> {
-        self.inner
+        *self.0.borrow()
     }
 }
 
-impl Deref for BroadcastAddr {
-    type Target = Option<SocketAddr>;
-
-    fn deref<'b>(&'b self) -> &'b Option<SocketAddr> {
-        &self.inner
-    }
-}
+unsafe impl Sync for BroadcastAddr {}
+unsafe impl Send for BroadcastAddr {}
