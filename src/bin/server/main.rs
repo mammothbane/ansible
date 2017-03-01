@@ -18,27 +18,47 @@ use rocket::config::Config as RConfig;
 use rocket::config::Environment;
 use rocket::State;
 use rocket::http::Status;
+use rocket::response::{Responder, Response};
+use rocket::response::status::Custom;
 
 use rocket_contrib::JSON;
 
+struct StatusResponder(u16);
+
+impl StatusResponder {
+    pub fn new(v: u16) -> StatusResponder {
+        StatusResponder(v)
+    }
+
+    pub fn err<T>(v: u16) -> Result<T, StatusResponder> {
+        Err(StatusResponder::new(v))
+    }
+}
+
+impl<'r> Responder<'r> for StatusResponder {
+    fn respond(self) -> Result<Response<'r>, Status> {
+        Err(Status::from_code(self.0).unwrap())
+    }
+}
+
 #[get("/")]
-fn index(cfg: State<Config>, addr: State<BroadcastAddr>, tok: Option<PullToken>) -> Result<String, Status> {
+fn index(cfg: State<Config>, addr: State<BroadcastAddr>, tok: Option<PullToken>) -> Result<String, StatusResponder> {
     match tok {
         Some(ref x) if *x == cfg.pull_key => (),
-        _ => return Err(Status::Unauthorized),
+        _ => return StatusResponder::err(401),
     }
 
     match (*addr).inner() {
         Some(x) => Ok(x.to_string()),
-        None => Err(Status::NotFound),
+        None => StatusResponder::err(404),
     }
 }
 
 #[post("/update", rank = 1, data = "<new_addr>")]
-fn update_json(new_addr: JSON<Update>, tok: Option<PushToken>, addr: State<BroadcastAddr>, cfg: State<Config>) -> Result<(), Status> {
+fn update_json(new_addr: JSON<Update>, tok: Option<PushToken>, addr: State<BroadcastAddr>, cfg: State<Config>) -> Result<(), StatusResponder> {
     match tok {
         Some(ref x) if *x == cfg.push_key => (),
-        _ => return Err(Status::Unauthorized)
+        _ => return StatusResponder::err(401)
     }
 
     (*addr).load(**new_addr);
@@ -46,10 +66,10 @@ fn update_json(new_addr: JSON<Update>, tok: Option<PushToken>, addr: State<Broad
 }
 
 #[post("/update", rank = 2)]
-fn update(remote: SocketAddr, addr: State<BroadcastAddr>, tok: Option<PushToken>, cfg: State<Config>) -> Result<(), Status> {
+fn update(remote: SocketAddr, addr: State<BroadcastAddr>, tok: Option<PushToken>, cfg: State<Config>) -> Result<(), StatusResponder> {
     match tok {
         Some(ref x) if *x == cfg.push_key => (),
-        _ => return Err(Status::Unauthorized),
+        _ => return StatusResponder::err(401),
     }
 
     (*addr).load(remote);
