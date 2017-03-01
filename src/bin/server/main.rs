@@ -11,59 +11,40 @@ mod error;
 use iron::prelude::*;
 use iron::status;
 use iron::Handler;
+use iron::typemap::Key;
+use iron::headers::Header;
+
 use router::Router;
 use config::reader::from_file;
-use persistent::{Read, Write};
+use persistent::{Read, Write, State};
 use rustc_serialize::hex::FromHex;
 
+use std::boxed::Box;
 use std::path::Path;
 use std::net::SocketAddr;
 
 use ansible::{PushToken, PullToken, Update};
 use error::ServerError;
 
-struct State {
-    address: Option<SocketAddr>
+struct Addr(Option<SocketAddr>);
+
+impl Addr {
+    fn new() -> Addr {
+        Addr(None)
+    }
+
+    fn update(&mut self, addr: SocketAddr) {
+        self.0 = Some(addr)
+    }
+
+    fn address(&self) -> Option<SocketAddr> {
+        self.0
+    }
 }
 
-impl State {
-    fn new() -> State {
-        State{address: None}
-    }
-
-    fn update(&mut self, addr: Option<SocketAddr>) {
-        self.address = Some(addr.clone())
-    }
-
-    fn address(&self) {
-        self.address
-    }
-
-    // fn update_handler(&mut self, req: &mut Request) -> IronResult<Response> {
-    //     self.address = Some(req.remote_addr.clone());
-    //     Ok(Response::with((status::Ok, "updated")))
-    // }
-    //
-    // fn get_handler(&self, req: &mut Request) -> IronResult<Response> {
-    //     Ok(Response::with((status::Ok, format!("{:?}", self.address))))
-    // }
+impl Key for Addr {
+    type Value = Addr;
 }
-
-// static mut ADDRESS: Option<SocketAddr> = None;
-//
-// fn update_handler(req: &mut Request) -> IronResult<Response> {
-//     unsafe {
-//         ADDRESS = Some(req.remote_addr.clone());
-//     }
-//
-//     Ok(Response::with((status::Ok, "update")))
-// }
-//
-// fn retrieve_handler(req: &mut Request) -> IronResult<Response> {
-//     unsafe {
-//         Ok(Response::with((status::Ok, format!("{:?}", ADDRESS))))
-//     }
-// }
 
 fn main() {
     let cfg = from_file(Path::new("ansible.conf")).expect("Failed to get config file.");
@@ -73,17 +54,26 @@ fn main() {
     let push_token = cfg.lookup_str("push_secret").unwrap().to_owned();
     let pull_token = cfg.lookup_str("pull_secret").unwrap().to_owned();
 
-    let mut state = State::new();
+    let adr = Box::new(Addr::new());
 
     let mut ret = Chain::new(move |r: &mut Request| {
-        Ok(Response::with((status::Ok, format!("{:?}", state.address()))))
+        let st = r.get::<State<Addr>>().unwrap().read().unwrap();
+        match st.address() {
+            Some(addr) => Ok(Response::with((status::Ok, format!("{:?}", addr)))),
+            None => Ok(Response::with((status::Ok, "FACK"))),
+        }
     });
-    let mut upd = Chain::new(move |r: &mut Request| {
-        let mutex = request.get::<Read<State>>;
-        let addr = mutex.lock().unwrap();
 
-        state.update_handler(r)
+    let mut upd = Chain::new(move |r: &mut Request| {
+        let mutex = r.get::<State<Addr>>().unwrap();
+        let mut addr = mutex.write().unwrap();
+
+        (*addr).update(r.remote_addr);
+        Ok(Response::with((status::Ok, "updated!")))
     });
+
+    ret.link(State::<Box<Addr>>::both(adr));
+    upd.link(State::<Box<Addr>>::both(adr.clone()));
 
     upd.link_before(move |r: &mut Request| {
         match r.headers.get::<PushToken>() {

@@ -13,11 +13,11 @@ header! { (PushToken, PUSH_KEY) => [String] }
 header! { (PullToken, PULL_KEY) => [String] }
 
 impl Key for Update {
-    type Value = std::net::IpAddr;
+    type Value = std::net::SocketAddr;
 }
 
 impl Update {
-    pub fn new(addr: std::net::IpAddr) -> Self {
+    pub fn new(addr: std::net::SocketAddr) -> Self {
         Update{address: addr}
     }
 }
