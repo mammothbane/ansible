@@ -1,2 +1,5 @@
 target
 ansible.json
+*.p12
+*.crt
+*.key

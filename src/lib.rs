@@ -5,9 +5,11 @@ extern crate serde_json;
 extern crate iron;
 
 mod config;
-mod update;
+mod payload;
 mod tokens;
+mod client;
 
 pub use config::Config;
-pub use update::Update;
+pub use payload::Payload;
 pub use tokens::{PushToken, PullToken, PUSH_KEY, PULL_KEY};
+pub use client::Client;

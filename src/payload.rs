@@ -4,19 +4,19 @@ use std::ops::Deref;
 use iron::typemap::Key;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Update(SocketAddr);
+pub struct Payload(SocketAddr);
 
-impl Key for Update {
+impl Key for Payload {
     type Value = SocketAddr;
 }
 
-impl Update {
+impl Payload {
     pub fn new(addr: SocketAddr) -> Self {
-        Update(addr)
+        Payload(addr)
     }
 }
 
-impl Deref for Update {
+impl Deref for Payload {
     type Target = SocketAddr;
 
     fn deref(&self) -> &SocketAddr {

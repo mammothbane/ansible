@@ -1,10 +1,15 @@
 extern crate ansible;
-extern crate hyper;
-extern crate serde_json;
 
-use hyper::client::Client;
+use ansible::{Config, Client};
+use std::thread;
+use std::time::Duration;
 
 fn main() {
-    let client = Client::new();
-    // let res = client.get(&server_addr[..]).send().unwrap();
+    let cfg = Config::load();
+    let client = Client::from_config(&cfg);
+
+    loop {
+        thread::sleep(Duration::from_millis(10_000));
+        client.update_server();
+    }
 }

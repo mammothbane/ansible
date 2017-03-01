@@ -3,7 +3,12 @@ extern crate router;
 extern crate persistent;
 extern crate bodyparser;
 extern crate ansible;
+
+extern crate hyper_native_tls;
+
+extern crate serde_json;
 extern crate rustc_serialize;
+extern crate rpassword;
 
 mod error;
 mod addr;
@@ -15,8 +20,10 @@ use routes::{index, update};
 use iron::prelude::*;
 use iron::status;
 use persistent::State;
-
 use router::Router;
+use hyper_native_tls::NativeTlsServer;
+
+use rpassword::prompt_password_stderr;
 
 use ansible::{PushToken, PullToken, Config};
 use error::ServerError;
@@ -58,5 +65,10 @@ fn router(cfg: Config) -> Router {
 fn main() {
     let cfg = Config::load();
     let port_str = cfg.port_str();
-    Iron::new(router(cfg)).http(port_str).unwrap();
+
+    let pass = prompt_password_stderr("SSL Cert Password: ").unwrap();
+    let ssl = NativeTlsServer::new("identity.p12", &pass[..]).unwrap();
+
+    println!("Starting server.");
+    Iron::new(router(cfg)).https(port_str, ssl).unwrap();
 }
