@@ -16,6 +16,10 @@ impl BroadcastAddr {
     pub fn load(&mut self, s: SocketAddr) {
         self.inner = Some(s)
     }
+
+    pub fn inner(&self) -> Option<SocketAddr> {
+        self.inner
+    }
 }
 
 impl Deref for BroadcastAddr {

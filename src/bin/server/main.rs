@@ -14,6 +14,7 @@ use ansible::{Config, PullToken, PushToken, Update};
 
 use std::net::SocketAddr;
 use std::ops::Deref;
+use std::sync::Mutex;
 
 use rocket::config::Config as RConfig;
 use rocket::config::Environment;
@@ -24,37 +25,40 @@ use rocket::request::Request;
 use rocket_contrib::JSON;
 
 #[get("/")]
-fn index(addr: State<BroadcastAddr>, cfg: State<Config>, tok: Option<PullToken>) -> Result<String, Status> {
+fn index(cfg: State<Config>, tok: Option<PullToken>) -> Result<String, Status> {
     match tok {
         Some(ref x) if *x == cfg.pull_key => (),
         _ => return Err(Status::Unauthorized),
     }
 
-    match *addr.inner().deref() {
-        Some(x) => Ok(x.to_string()),
-        None => Err(Status::NotFound),
+    unsafe {
+        let adr: Option<SocketAddr> = addr.lock().expect("Failed to lock on socket address.").inner();
+        match adr {
+            Some(x) => Ok(x.to_string()),
+            None => Err(Status::NotFound),
+        }        
     }
 }
 
 #[post("/update", rank = 1, data = "<newAddr>")]
-fn update_json(newAddr: JSON<Update>, mut addr: State<BroadcastAddr> , tok: Option<PushToken>, cfg: State<Config>) -> Result<(), Status> {
+fn update_json(newAddr: JSON<Update>, tok: Option<PushToken>, cfg: State<Config>) -> Result<(), Status> {
     match tok {
         Some(ref x) if *x == cfg.push_key => (),
         _ => return Err(Status::Unauthorized)
     }
 
-    addr.load(newAddr.addr());
+    unsafe { addr.lock().expect("unable to lock address").load(newAddr.addr()); }
     Ok(())
 }
 
 #[post("/update", rank = 2)]
-fn update(remote: SocketAddr, mut addr: State<BroadcastAddr>, tok: Option<PushToken>, cfg: State<Config>) -> Result<(), Status> {
+fn update(remote: SocketAddr, tok: Option<PushToken>, cfg: State<Config>) -> Result<(), Status> {
     match tok {
         Some(ref x) if *x == cfg.push_key => (),
         _ => return Err(Status::Unauthorized),
     }
 
-    addr.load(remote);
+    unsafe { addr.lock().expect("unable to lock address").load(remote); }
     Ok(())
 }
 
@@ -62,6 +66,8 @@ fn update(remote: SocketAddr, mut addr: State<BroadcastAddr>, tok: Option<PushTo
 fn unauthorized() -> String {
     "You are not authorized to do that.".to_owned()
 }
+
+static mut addr: Mutex<BroadcastAddr> = Mutex::new(BroadcastAddr::new());
 
 fn main() {
     let cfg = Config::load();
@@ -74,7 +80,7 @@ fn main() {
 
     rocket::custom(rcfg, true)
         .mount("/", routes![index, update])
-        .manage(BroadcastAddr::new())
+        .manage(unsafe { addr })
         .manage(cfg)
         .catch(errors![unauthorized])
         .launch();
