@@ -2,7 +2,6 @@
 name = "ansible"
 version = "0.1.0"
 authors = ["Nathan Perry <avaglir@gmail.com>"]
-build = "build.rs"
 
 [[bin]]
 name = "pull"
@@ -16,18 +15,17 @@ path = "src/bin/push/main.rs"
 name = "server"
 path = "src/bin/server/main.rs"
 
-[build-dependencies]
-serde_codegen = "0.8"
-
 [dependencies]
 iron = "0.5.1"
 router = "0.5.1"
 persistent = "0.3.0"
-config = "~0.1.0"
 hyper = "0.10.4"
 plugin = "0.2.6"
-serde = "0.8"
-serde_json = "0.8.3"
+
+serde = "0.9"
+serde_json = "0.9"
+serde_derive = "0.9"
+
 rustc-serialize = "0.3.21"
 time = "*"
 

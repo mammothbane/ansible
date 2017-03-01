@@ -1,0 +1,5 @@
+{
+  "port": 10000,
+  "push_secret": "3643de5c0f1f835456433b5ee747e3802c71e98ab8d439cbaabc653700060c91",
+  "pull_secret": "357fdcccb6fc2c4123c1be515eb1a6f064081f49ce97948aae37804c6fae3534"
+}

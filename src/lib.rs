@@ -1,23 +1,13 @@
 #[macro_use] extern crate hyper;
+#[macro_use] extern crate serde_derive;
+extern crate serde;
 extern crate serde_json;
 extern crate iron;
 
-include!(concat!(env!("OUT_DIR"), "/serde_types.rs"));
+mod config;
+mod update;
+mod tokens;
 
-use iron::typemap::Key;
-
-const PUSH_KEY: &'static str = "X-Ansible-PushToken";
-const PULL_KEY: &'static str = "X-Ansible-PullToken";
-
-header! { (PushToken, PUSH_KEY) => [String] }
-header! { (PullToken, PULL_KEY) => [String] }
-
-impl Key for Update {
-    type Value = std::net::SocketAddr;
-}
-
-impl Update {
-    pub fn new(addr: std::net::SocketAddr) -> Self {
-        Update{address: addr}
-    }
-}
+pub use config::Config;
+pub use update::Update;
+pub use tokens::{PushToken, PullToken, PUSH_KEY, PULL_KEY};
