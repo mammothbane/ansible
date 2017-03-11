@@ -1,0 +1,4 @@
+{
+  "cert_pass": "my_cert_pass",
+  "identity_file": "my_identity_file.p12"
+}

@@ -6,24 +6,24 @@ extern crate ansible;
 
 extern crate hyper_native_tls;
 
+#[macro_use] extern crate serde_derive;
 extern crate serde_json;
-extern crate rustc_serialize;
 extern crate rpassword;
 
 mod error;
 mod addr;
 mod routes;
+mod server_config;
 
 use addr::Addr;
 use routes::{index, update};
+use server_config::ServerConfig;
 
 use iron::prelude::*;
 use iron::status;
 use persistent::State;
 use router::Router;
 use hyper_native_tls::NativeTlsServer;
-
-use rpassword::prompt_password_stderr;
 
 use ansible::{PushToken, PullToken, Config};
 use error::ServerError;
@@ -57,17 +57,23 @@ fn router(cfg: Config) -> Router {
     });
 
     router.get("/update", upd, "ping with updated ip");
-    router.get("/", ret, "retrieve current ip");
+    router.get("/pull", ret, "retrieve current ip");
+    router.get("/", move |_: &mut Request| {
+        Ok(Response::with((status::Ok, "Hello.")))
+    }, "index");
 
     router
 }
 
 fn main() {
     let cfg = Config::load();
+    let server_cfg = ServerConfig::load();
     let port_str = cfg.port_str();
 
-    let pass = prompt_password_stderr("SSL Cert Password: ").unwrap();
-    let ssl = NativeTlsServer::new("identity.p12", &pass[..]).unwrap();
+    let cert_pass = &server_cfg.cert_pass[..];
+    let identity_file = &server_cfg.identity_file[..];
+
+    let ssl = NativeTlsServer::new(identity_file, cert_pass).expect("Unable to create TLS server with provided identity and password.");
 
     println!("Starting server.");
     Iron::new(router(cfg)).https(port_str, ssl).unwrap();

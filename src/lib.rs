@@ -13,3 +13,7 @@ pub use config::Config;
 pub use payload::Payload;
 pub use tokens::{PushToken, PullToken, PUSH_KEY, PULL_KEY};
 pub use client::Client;
+
+pub trait FromConfig {
+    fn from_config(config: &Config) -> Self;
+}

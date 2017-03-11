@@ -2,6 +2,7 @@ use PullToken;
 use PushToken;
 use Payload;
 use Config;
+use FromConfig;
 
 use serde_json;
 use hyper::client::Client as HClient;
@@ -43,15 +44,6 @@ impl Client {
         }
     }
 
-    pub fn from_config(config: &Config) -> Client {
-        Client {
-            push_token: Some(config.push_key.clone()),
-            pull_token: Some(config.pull_key.clone()),
-            client: HClient::new(),
-            server: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 0)), config.port)
-        }
-    }
-
     #[inline]
     fn server_str(&self) -> String {
         format!("https://{}:{}/", self.server.ip(), self.server.port())
@@ -60,7 +52,7 @@ impl Client {
     pub fn update_server(&self) {
         assert!(self.push_token != None);
         println!("{}", self.server_str());
-        
+
         self.client
             .post(&(self.server_str() + "update"))
             .header(self.push_token.clone().unwrap())
@@ -77,5 +69,16 @@ impl Client {
             .unwrap();
 
         *serde_json::from_reader::<_, Payload>(res).unwrap()
+    }
+}
+
+impl FromConfig for Client {
+    fn from_config(config: &Config) -> Client {
+        Client {
+            push_token: Some(config.push_key.clone()),
+            pull_token: Some(config.pull_key.clone()),
+            client: HClient::new(),
+            server: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 0)), config.port)
+        }
     }
 }

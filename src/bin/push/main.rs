@@ -1,6 +1,6 @@
 extern crate ansible;
 
-use ansible::{Config, Client};
+use ansible::{Config, Client, FromConfig};
 use std::thread;
 use std::time::Duration;
 

@@ -1,5 +1,8 @@
 target
 ansible.json
+ansible_server.json
 *.p12
 *.crt
 *.key
+*.cnf
+*.pem
